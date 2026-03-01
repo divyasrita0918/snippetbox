@@ -1,29 +1,40 @@
 package main
 
 import (
-    "fmt"
-    "html/template"
-    "net/http"
-    "strconv"
+	"errors"
+	"fmt"
+	"html/template"
+	"net/http"
+	"strconv"
+
+	"snippet.divyasrita.net/internal/models"
 )
 
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-    w.Header().Add("Server", "Go")
+      w.Header().Add("Server", "Go")
     
+    snippets, err := app.snippets.Latest()
+    if err != nil {
+        app.serverError(w, r, err)
+        return
+    }
     files := []string{
         "./ui/html/base.tmpl",
         "./ui/html/partials/nav.tmpl",
         "./ui/html/pages/home.tmpl",
     }
-
     ts, err := template.ParseFiles(files...)
-    if err != nil{
+    if err != nil {
         app.serverError(w, r, err)
         return
     }
-
-    err = ts.ExecuteTemplate(w, "base", nil)
+    
+    data := templateData{
+        Snippets: snippets,
+    }
+   
+    err = ts.ExecuteTemplate(w, "base", data)
     if err != nil {
         app.serverError(w, r, err)
     }
@@ -36,7 +47,36 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
         http.NotFound(w, r)
         return
     }
-    fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+    snippet, err := app.snippets.Get(id)
+    if err != nil {
+        if errors.Is(err, models.ErrNoRecord) {
+            http.NotFound(w, r)
+        } else {
+            app.serverError(w, r, err)
+        }
+        return
+    }
+   
+    files := []string{
+        "./ui/html/base.tmpl",
+        "./ui/html/partials/nav.tmpl",
+        "./ui/html/pages/view.tmpl",
+    }
+    
+    ts, err := template.ParseFiles(files...)
+    if err != nil {
+        app.serverError(w, r, err)
+        return
+    }
+   
+    data := templateData{
+        Snippet: snippet,
+    }
+
+    err = ts.ExecuteTemplate(w, "base", data)
+    if err != nil {
+        app.serverError(w, r, err)
+    }
 }
 
 
@@ -46,6 +86,13 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-    w.WriteHeader(http.StatusCreated)
-    w.Write([]byte("Save a new snippet..."))
+    title := "O snail"
+    content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+    expires := 7
+    id, err := app.snippets.Insert(title, content, expires)
+    if err != nil {
+        app.serverError(w, r, err)
+        return
+    }
+    http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }
