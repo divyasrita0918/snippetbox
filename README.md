@@ -1,2 +1,11 @@
-# snippetbox
-A production-style Go web application demonstrating backend best practices including dependency injection, session management, secure cookies, TLS configuration, and MVC-inspired architecture.
+# SnippetBox
+
+SnippetBox is a Go web application that allows users to create, view, and manage text snippets. It includes user authentication, session handling, and secure communication over HTTPS.
+
+## Features
+- User signup and login
+- Session management
+- Flash messages
+- Secure HTTPS configuration
+- MySQL database integration
+- Template rendering system
