@@ -94,6 +94,7 @@ func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
     data.Form = userSignupForm{}
     app.render(w, r, http.StatusOK, "signup.tmpl", data)
 }
+
 func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
     var form userSignupForm
     err := app.decodePostForm(r, &form)
